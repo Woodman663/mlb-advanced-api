@@ -1,0 +1,8 @@
+class CreatePitcher < ActiveRecord::Migration[5.2]
+  def change
+    create_table :pitchers do |t|
+      t.string :name
+      t.integer :mlb_key
+    end
+  end
+end
