@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_13_205323) do
+ActiveRecord::Schema.define(version: 2019_08_12_195731) do
 
   create_table "batters", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
@@ -23,13 +23,13 @@ ActiveRecord::Schema.define(version: 2019_07_13_205323) do
   end
 
   create_table "pitches", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.decimal "horizontal_location", precision: 10
-    t.decimal "vertical_location", precision: 10
-    t.decimal "vertical_release", precision: 10
-    t.decimal "horizontal_release", precision: 10
-    t.decimal "vertical_movement", precision: 10
-    t.decimal "horizontal_movement", precision: 10
-    t.integer "mlb_key"
+    t.decimal "horizontal_location", precision: 6, scale: 2
+    t.decimal "vertical_location", precision: 6, scale: 2
+    t.decimal "vertical_release", precision: 6, scale: 2
+    t.decimal "horizontal_release", precision: 6, scale: 2
+    t.decimal "vertical_movement", precision: 6, scale: 2
+    t.decimal "horizontal_movement", precision: 6, scale: 2
+    t.string "mlb_key"
     t.string "pitch_hand"
     t.string "bat_side"
     t.boolean "edge"
@@ -43,17 +43,22 @@ ActiveRecord::Schema.define(version: 2019_07_13_205323) do
     t.integer "strikes"
     t.integer "outs"
     t.string "batted_ball_type"
-    t.decimal "exit_velo", precision: 10
-    t.decimal "launch_angle", precision: 10
-    t.decimal "prev_pitch_velo", precision: 10
-    t.decimal "prev_pitch_vertical_movement", precision: 10
-    t.decimal "prev_pitch_horizontal_movement", precision: 10
-    t.decimal "prev_pitch_vertical_location", precision: 10
-    t.decimal "prev_pitch_horizontal_location", precision: 10
+    t.decimal "exit_velo", precision: 6, scale: 2
+    t.decimal "launch_angle", precision: 6, scale: 2
+    t.decimal "prev_pitch_velo", precision: 6, scale: 2
+    t.decimal "prev_pitch_vertical_movement", precision: 6, scale: 2
+    t.decimal "prev_pitch_horizontal_movement", precision: 6, scale: 2
+    t.decimal "prev_pitch_vertical_location", precision: 6, scale: 2
+    t.decimal "prev_pitch_horizontal_location", precision: 6, scale: 2
     t.integer "fielded_by"
     t.boolean "changeup"
     t.bigint "pitcher_id"
     t.bigint "batter_id"
+    t.integer "year"
+    t.integer "spin_rate"
+    t.decimal "virtual_bases", precision: 6, scale: 2
+    t.decimal "virtual_outs", precision: 6, scale: 2
+    t.decimal "velocity", precision: 6, scale: 2
     t.index ["batter_id"], name: "index_pitches_on_batter_id"
     t.index ["pitcher_id"], name: "index_pitches_on_pitcher_id"
   end
