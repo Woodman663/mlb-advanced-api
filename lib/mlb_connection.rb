@@ -74,8 +74,8 @@ class MlbConnection
           strikes = 0
           pa['playEvents'].each do |pitch|
             next if pitch['isPitch'] == false # don't process play events that are not pitches
-            pitch_exists = Pitch.find_by mlb_key: pitch['pfxId']
-            unless pitch_exists.present? # we only want to save a pitch we haven't already added
+            pitch_exists = Pitch.where(:mlb_key => pitch['pfxId']).exists?
+            unless pitch_exists # we only want to save a pitch we haven't already added
               params = {
                 'pitcher' => pitcher.id,
                 'batter' => batter.id,
@@ -111,8 +111,7 @@ class MlbConnection
 
   def process_pitch_event(pitch_event, params)
     # we don't want to save pitches that lack the most basic data
-    return unless pitch_event['pitchData'].present?
-    return unless pitch_event['pitchData']['startSpeed'].present?
+    return unless validate_pitch_event(pitch_event) # check if the event contains the expected data structure
     pitch = Pitch.new
     # unpack some params
     result = params['result']
@@ -128,14 +127,12 @@ class MlbConnection
     pitch.year = @year
     # handle the pitch data here
     pitch_data = pitch_event['pitchData']
-    if pitch_data['coordinates'].present?
-      pitch.vertical_location = normalize_height(pitch_event) # special function to correct for different size of strikezones depending on batter height
-      pitch.horizontal_location = check_and_format_value(pitch_data['coordinates']['pX'])
-      pitch.vertical_movement = check_and_format_value(pitch_data['coordinates']['pfxZ'])
-      pitch.horizontal_movement = check_and_format_value(pitch_data['coordinates']['pfxX'])
-      pitch.vertical_release = check_and_format_value(pitch_data['coordinates']['z0'])
-      pitch.horizontal_release = check_and_format_value(pitch_data['coordinates']['x0'])
-    end
+    pitch.vertical_location = normalize_height(pitch_event) # special function to correct for different size of strikezones depending on batter height
+    pitch.horizontal_location = check_and_format_value(pitch_data['coordinates']['pX'])
+    pitch.vertical_movement = check_and_format_value(pitch_data['coordinates']['pfxZ'])
+    pitch.horizontal_movement = check_and_format_value(pitch_data['coordinates']['pfxX'])
+    pitch.vertical_release = check_and_format_value(pitch_data['coordinates']['z0'])
+    pitch.horizontal_release = check_and_format_value(pitch_data['coordinates']['x0'])
     pitch.velocity = check_and_format_value(pitch_data['startSpeed'])
     if pitch_data['breaks'].present?
       pitch.spin_rate = check_value(pitch_data['breaks']['spinRate'])
@@ -205,7 +202,7 @@ class MlbConnection
         pitch.hit = false
         pitch.virtual_bases = 0
         pitch.virtual_outs = 1
-      when 'catcher_interf'
+      when 'catcher_interf' # this outcome has nothing to do with either batter or pitcher, so we disregard it
         return nil
       else
         puts 'I do not know what to do with result ' + result
@@ -257,11 +254,21 @@ class MlbConnection
     unless pitch_event['pitchData']['coordinates']['pZ'].present?
       return nil
     end
-    top_of_zone = pitch_event['pitchData']['strikeZoneTop'].present? ? pitch_event['pitchData']['strikeZoneTop'].to_f : 3.4
+    valid = pitch_event['pitchData']['strikeZoneTop'].present? && pitch_event['pitchData']['strikeZoneBottom'] > 0
+    top_of_zone =  valid ? pitch_event['pitchData']['strikeZoneTop'].to_f : 3.4
     bottom_of_zone = pitch_event['pitchData']['strikeZoneBottom'].present? ? pitch_event['pitchData']['strikeZoneBottom'].to_f : 1.6
     size_factor = 1.8 / (top_of_zone - bottom_of_zone)
     normalized_height = size_factor * (pitch_event['pitchData']['coordinates']['pZ'].to_f - bottom_of_zone)
     normalized_height.to_d #todo: remove
+  end
+
+  def validate_pitch_event(pitch_event)
+    # this function will return false unless the data we need to save a meaningful pitch is all present
+    return false unless pitch_event['details'].present?
+    return false unless pitch_event['pitchData'].present?
+    return false unless pitch_event['pitchData']['startSpeed'].present?
+    return false unless pitch_event['pitchData']['coordinates'].present?
+    return true
   end
 
   def check_value(value)
