@@ -182,7 +182,8 @@ class MlbConnection
         'fielders_choice_out',
         'triple_play',
         'batter_interference',
-        'sac_bunt_double_play'
+        'sac_bunt_double_play',
+        'sac_fly_double_play',
       ]
       case result # check for hit, type of hit and outs
       when 'single'
