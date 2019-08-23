@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_12_195731) do
+ActiveRecord::Schema.define(version: 2019_08_19_193339) do
 
   create_table "batters", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
@@ -60,7 +60,14 @@ ActiveRecord::Schema.define(version: 2019_08_12_195731) do
     t.decimal "virtual_outs", precision: 6, scale: 2
     t.decimal "velocity", precision: 6, scale: 2
     t.index ["batter_id"], name: "index_pitches_on_batter_id"
+    t.index ["horizontal_location"], name: "index_pitches_on_horizontal_location"
+    t.index ["horizontal_movement"], name: "index_pitches_on_horizontal_movement"
+    t.index ["mlb_key", "velocity", "horizontal_location"], name: "index_pitches_on_mlb_key_and_velocity_and_horizontal_location"
+    t.index ["mlb_key"], name: "index_pitches_on_mlb_key"
     t.index ["pitcher_id"], name: "index_pitches_on_pitcher_id"
+    t.index ["velocity"], name: "index_pitches_on_velocity"
+    t.index ["vertical_location"], name: "index_pitches_on_vertical_location"
+    t.index ["vertical_movement"], name: "index_pitches_on_vertical_movement"
   end
 
 end
