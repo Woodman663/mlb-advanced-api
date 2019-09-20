@@ -87,7 +87,10 @@ class MlbConnection
                 'balls' => balls,
                 'strikes' => strikes,
               }
-              prev_pitch = process_pitch_event(pitch, params)
+              prev = process_pitch_event(pitch, params)
+              if prev.present?
+                prev_pitch = prev
+              end
               balls = check_value(pitch['count']['balls'])
               strikes = check_value(pitch['count']['strikes'])
             end
@@ -111,7 +114,7 @@ class MlbConnection
 
   def process_pitch_event(pitch_event, params)
     # we don't want to save pitches that lack the most basic data
-    return unless validate_pitch_event(pitch_event) # check if the event contains the expected data structure
+    return nil unless validate_pitch_event(pitch_event) # check if the event contains the expected data structure
     pitch = Pitch.new
     # unpack some params
     result = params['result']
@@ -206,7 +209,9 @@ class MlbConnection
       when 'catcher_interf' # this outcome has nothing to do with either batter or pitcher, so we disregard it
         return nil
       else
-        puts 'I do not know what to do with result ' + result
+        puts 'I do not know what to do with result ' + result.to_s
+        puts 'The pitcher is ' + pitch.pitcher_id.to_s
+        puts 'The mlb key is ' + pitch.mlb_key.to_s
         pitch.hit = nil
       end
     else
@@ -227,12 +232,12 @@ class MlbConnection
         pitch.swing = false
         pitch.virtual_outs = 1/3.to_d
         pitch.virtual_bases = 0
-      when 'S', 'T', 'W', 'M', 'O' # we count foul tips 'T' as swinging strikes, 'W' is swinging strike (blocked) and 'M' and 'O' are missed bunts'
+      when 'S', 'T', 'W', 'M', 'O', 'Q' # we count foul tips 'T' as swinging strikes, 'W' is swinging strike (blocked) and 'M' and 'O' are missed bunts'
         pitch.swing = true
         pitch.virtual_outs = 1/3.to_d
         pitch.virtual_bases = 0
         pitch.whiff = true
-      when 'F', 'L' # 'L' is a foul bunt attempt
+      when 'F', 'L', 'R' # 'L' is a foul bunt attempt, R is a foul pitchout
         pitch.swing = true
         pitch.foul = true
         pitch.virtual_bases = 0
@@ -243,8 +248,13 @@ class MlbConnection
             pitch.virtual_outs = 0
           end
         end
+      when 'I', 'V' # intentional ball, not a pitch we want to analyze
+        return nil
       else
         puts 'I do not know what to do with code ' + pitch_event['details']['code']
+        puts 'The pitcher is ' + pitch.pitcher_id.to_s
+        puts 'The mlb key is ' + pitch.mlb_key.to_s
+        return nil
       end
     end
     pitch.save
@@ -276,6 +286,7 @@ class MlbConnection
     if value.present?
       return value
     end
+    return nil
   end
 
   def check_and_format_value(value)
